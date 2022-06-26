@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cart;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 
 class CategoryController extends Controller
 {
@@ -41,7 +43,7 @@ class CategoryController extends Controller
         $request->validate([
             'name' => 'required',
             'image' => 'required',
-            'parent_id' => 'nullable|required_if:categoried,id',
+            'parent_id' => 'nullable|exists:categories,'
         ]);
         $new_image = rand() . rand() . $request->file('image')->getClientOriginalExtension();
         $request->file('image')->move(public_path('uploads/images/category'), $new_image);
@@ -78,7 +80,9 @@ class CategoryController extends Controller
      */
     public function edit($id)
     {
-        //
+        $category = Category::findOrFail($id);
+        $categories = Category::WhereNull('parent_id')->where('id', '<>', $category->id)->get(); // 'id' == $id && $category->id == $id
+        return view('backend.categories.edit', compact('categories', 'category'));
     }
 
     /**
@@ -90,7 +94,31 @@ class CategoryController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $request->validate([
+            'name' => 'required',
+            'image' => 'nullable',
+            'parent_id' => 'nullable|exists:categories,'
+        ]);
+
+        $category = Category::findOrFail($id);
+        $new_image = $category->image;
+
+        if ($request->hasFile('image')) {
+            $new_image = rand() . rand() . $request->file('image')->getClientOriginalExtension();
+            $request->file('image')->move(public_path('uploads/images/category'), $new_image);
+        }
+
+        $category->update([
+            'name' => $request->name,
+            'image' => $new_image,
+            'parent_id' => $request->parent_id,
+        ]);
+        $notification = array(
+            'message' => 'Category Updated Successfully',
+            'alert-type' => 'success'
+        );
+
+        return redirect()->route('admin.category.index')->with($notification);
     }
 
     /**
@@ -101,6 +129,23 @@ class CategoryController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $category = Category::findOrFail($id);
+        // Delete image
+        if (file_exists(public_path('uploads/images/category' . $category->image))) {
+            File::delete(public_path('uploads/images/category' . $category->image));
+        }
+
+        // set parent id to null
+        Category::where('parent_id', $category->id)->update(['parent_id' => null]);
+        // Category::where('parent_id', $category->id)->delete();
+
+        // delete item
+        $category->delete();
+        $notification = array(
+            'message' => 'Category deleted Successfully',
+            'alert-type' => 'success'
+        );
+
+        return redirect()->back()->with($notification);
     }
 }
