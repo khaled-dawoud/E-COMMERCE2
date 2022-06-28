@@ -54,7 +54,7 @@
                                             <td> {{ $category->name }} </td>
                                             <td> <img width="100px" src="{{ asset('uploads/images/category/'.$category->image) }}" alt=""> </td>
                                             <td> {{ $category->parent->name }} </td>
-                                            <td> {{ $category->products->count() }} </td>
+                                            <td> <span class="badge bg-primary">{{ $category->products->count() }}</span> </td>
                                             <td>
                                                 <a href="{{ route('admin.category.edit',$category->id) }}" class="btn btn-info btn-sm" title="Edit Data"><i class="fas fa-edit"></i></a>
                                                 <form action="{{ route('admin.category.destroy',$category->id) }}" method="POST" class="d-inline">

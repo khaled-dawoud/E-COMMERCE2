@@ -17,7 +17,7 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        $categories  = Category::orderBy('id', 'desc')->get();
+        $categories  = Category::with('products', 'parent')->orderBy('id', 'desc')->get(); //withCount -> build fake column call (products_count)
         return view('backend.categories.index', compact('categories'));
     }
 
